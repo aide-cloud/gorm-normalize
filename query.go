@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
 )
 
@@ -42,6 +43,9 @@ type IAction[T any] interface {
 
 	// Order 排序
 	Order(column string) IOrder[T]
+
+	// Clauses 设置Clauses
+	Clauses(conds ...clause.Expression) IAction[T]
 }
 
 type Action[T any] struct {
@@ -88,6 +92,11 @@ func WithTabler[T any](tabler schema.Tabler) ActionOption[T] {
 
 func (a *Action[T]) DB() *gorm.DB {
 	return a.db
+}
+
+func (a *Action[T]) Clauses(conds ...clause.Expression) IAction[T] {
+	a.db = a.db.Clauses(conds...)
+	return a
 }
 
 func (a *Action[T]) Order(column string) IOrder[T] {
