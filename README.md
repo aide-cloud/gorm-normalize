@@ -1,6 +1,6 @@
 # gorm-normalize
 
-> 让gorm使用过程中更加规范, 而不是一个项目里面各种风格都有
+> 让gorm使用过程中更加规范, 简洁
 
 ## 安装
 
@@ -8,25 +8,28 @@
 go get -u github.com/aide-cloud/gorm-normalize@latest
 ```
 
-1. 区别于直接使用gorm, 使其更加规范
+* **区别于直接使用gorm, 使其更加规范**
    1. 结构上的规范
-   2. 查询上的规范
-   3. 事务上的规范
+   2. DB操作上的规范
 
-2. 区别于使用gorm gen, 使其更加灵活
+* **区别于使用gorm gen, 使其更加灵活**
    1. 不用生成代码, 直接使用
-   2. 减少代码量, 使其更加简洁
+   2. 减少代码量, 更加简洁灵活
 
 
 ## 1. Model
+
+> 声明model时, 需要继承`query.BaseModel`
 
 * user.go
 
 ```go
 package model
 
+import query "github.com/aide-cloud/gorm-normalize"
+
 type User struct {
-	BaseModel
+	query.BaseModel
 	Name  string  `gorm:"column:name;type:varchar(20);not null;default:'';comment:用户名" json:"name"`
 	Files []*File `gorm:"foreignKey:UserID" json:"files"`
 }
@@ -50,10 +53,14 @@ func (User) TableName() string {
 ```go
 package model
 
+import (
+	query "github.com/aide-cloud/gorm-normalize"
+)
+
 type FileType int8
 
 type File struct {
-	BaseModel
+	query.BaseModel
 	UserID   uint     `gorm:"column:user_id;type:int(10) unsigned;not null;default:0;comment:用户ID" json:"user_id"`
 	Name     string   `gorm:"column:name;type:varchar(20);not null;default:'';comment:文件名" json:"name"`
 	Url      string   `gorm:"column:url;type:varchar(255);not null;default:'';comment:文件地址" json:"url"`
@@ -86,9 +93,23 @@ func (File) TableName() string {
 
 ## 2. Data
 
+> 声明data操作时, 需要继承`query.IAction`, 这是一个接口, 里面包含了常用的操作方法, 可以自定义实现
+>
+> 当然, 如果`query.IAction`内置的方法不能满足你的需求, 你也可以自定义方法, 只需要在你的模块上声明即可, 例如, 下面的`PreloadFiles`方法就是自定义的方法, 用于预加载用户关联的文件列表
+
 * user.go
 
 ```go
+package user
+
+import (
+	"gin-plus-admin/pkg/conn"
+	"gin-plus-admin/pkg/model"
+
+	query "github.com/aide-cloud/gorm-normalize"
+	"gorm.io/gorm"
+)
+
 type (
 	// User ...
 	User struct {
@@ -107,7 +128,7 @@ func NewUser() *User {
 }
 
 // PreloadFiles 预加载关联文件
-func (l *User) PreloadFiles(scops ...model.Scopemethod) model.Scopemethod {
+func (l *User) PreloadFiles(scops ...query.Scopemethod) query.Scopemethod {
 	return func(db *gorm.DB) *gorm.DB {
 		if len(scops) == 0 {
 			return db.Preload(l.PreloadFilesKey)
@@ -122,9 +143,26 @@ func (l *User) PreloadFiles(scops ...model.Scopemethod) model.Scopemethod {
 
 ## service
 
+> 声明service, 用于处理业务逻辑, 例如, 你需要获取用户详情, 那么你可以在这里处理, 如下所示
+> 
+> 下面的`GetDetail`方法就是获取用户详情的方法, 标准的输入输出, 你可以根据自己的需求来定义
+
 * user.go
 
 ```go
+package user
+
+import (
+	"context"
+
+	dataUser "gin-plus-admin/internal/data/user"
+	"gin-plus-admin/pkg/model"
+
+	ginplus "github.com/aide-cloud/gin-plus"
+	query "github.com/aide-cloud/gorm-normalize"
+	"go.uber.org/zap"
+)
+
 type (
 	// DetailReq ...
 	DetailReq struct {
@@ -148,7 +186,7 @@ type (
 func (l *User) GetDetail(ctx context.Context, req *DetailReq) (*DetailResp, error) {
 	userData := dataUser.NewUser()
 
-	first, err := userData.WithContext(ctx).First(model.WhereID(req.ID), userData.PreloadFiles())
+	first, err := userData.WithContext(ctx).First(query.WhereID(req.ID), userData.PreloadFiles())
 	if err != nil {
 		ginplus.Logger().Error("get user detail failed", zap.Any("req", req), zap.Error(err))
 		return nil, err
