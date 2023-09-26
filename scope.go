@@ -28,11 +28,13 @@ func WhereLikeKeyword(keyword string, columns ...string) Scopemethod {
 		if keyword == "" || len(columns) == 0 {
 			return db
 		}
+
+		dbTmp := db
 		likeKeyword := "%" + keyword + "%"
 		for _, column := range columns {
-			db = db.Or("`"+column+"` LIKE ?", likeKeyword)
+			dbTmp = dbTmp.Or("`"+column+"` LIKE ?", likeKeyword)
 		}
-		return db
+		return db.Where(dbTmp)
 	}
 }
 
