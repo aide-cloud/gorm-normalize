@@ -22,11 +22,26 @@ type IAction[T any] interface {
 	Update(m *T, wheres ...Scopemethod) error
 	// Delete 删除数据
 	Delete(wheres ...Scopemethod) error
+	// ForcedDelete 强制删除数据
+	ForcedDelete(wheres ...Scopemethod) error
+
+	DB() *gorm.DB
 
 	// WithDB 设置DB
 	WithDB(db *gorm.DB) IAction[T]
 	// WithContext 设置Ctx
 	WithContext(ctx context.Context) IAction[T]
+	// WithTabler 设置Tabler
+	WithTabler(tabler schema.Tabler) IAction[T]
+	// Preload 预加载
+	Preload(preloadKey string, wheres ...Scopemethod) IAction[T]
+	// Joins 设置关联
+	Joins(joinsKey string, wheres ...Scopemethod) IAction[T]
+	// Scopes 设置作用域
+	Scopes(wheres ...Scopemethod) IAction[T]
+
+	// Order 排序
+	Order(column string) IOrder[T]
 }
 
 type Action[T any] struct {
@@ -71,6 +86,14 @@ func WithTabler[T any](tabler schema.Tabler) ActionOption[T] {
 	}
 }
 
+func (a *Action[T]) DB() *gorm.DB {
+	return a.db
+}
+
+func (a *Action[T]) Order(column string) IOrder[T] {
+	return NewOrder[T](column).WithIAction(a)
+}
+
 func (a *Action[T]) WithDB(db *gorm.DB) IAction[T] {
 	a.db = db
 	return a
@@ -78,6 +101,30 @@ func (a *Action[T]) WithDB(db *gorm.DB) IAction[T] {
 
 func (a *Action[T]) WithContext(ctx context.Context) IAction[T] {
 	a.ctx = ctx
+	return a
+}
+
+func (a *Action[T]) WithTabler(tabler schema.Tabler) IAction[T] {
+	a.Tabler = tabler
+	return a
+}
+
+func (a *Action[T]) Preload(preloadKey string, wheres ...Scopemethod) IAction[T] {
+	a.db = a.db.Preload(preloadKey, func(db *gorm.DB) *gorm.DB {
+		return db.Scopes(wheres...)
+	})
+	return a
+}
+
+func (a *Action[T]) Joins(joinsKey string, wheres ...Scopemethod) IAction[T] {
+	a.db = a.db.Joins(joinsKey, func(db *gorm.DB) *gorm.DB {
+		return db.Scopes(wheres...)
+	})
+	return a
+}
+
+func (a *Action[T]) Scopes(wheres ...Scopemethod) IAction[T] {
+	a.db = a.db.Scopes(wheres...)
 	return a
 }
 
@@ -105,8 +152,13 @@ func (a *Action[T]) Last(wheres ...Scopemethod) (*T, error) {
 // List 查询多条数据
 func (a *Action[T]) List(pgInfo Pagination, wheres ...Scopemethod) ([]*T, error) {
 	var ms []*T
+	var m T
+	db := a.db
+	if a.Tabler == nil {
+		db.Model(&m)
+	}
 
-	db := a.db.WithContext(a.ctx).Scopes(wheres...)
+	db = db.WithContext(a.ctx).Scopes(wheres...)
 
 	if pgInfo != nil {
 		var total int64
@@ -138,4 +190,10 @@ func (a *Action[T]) Update(newModel *T, wheres ...Scopemethod) error {
 func (a *Action[T]) Delete(wheres ...Scopemethod) error {
 	var m T
 	return a.db.WithContext(a.ctx).Scopes(wheres...).Delete(&m).Error
+}
+
+// ForcedDelete 强制删除数据
+func (a *Action[T]) ForcedDelete(wheres ...Scopemethod) error {
+	var m T
+	return a.db.WithContext(a.ctx).Unscoped().Scopes(wheres...).Delete(&m).Error
 }
