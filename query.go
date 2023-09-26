@@ -17,6 +17,8 @@ type IAction[T any] interface {
 	Last(wheres ...Scopemethod) (*T, error)
 	// List 查询多条数据
 	List(pgInfo Pagination, wheres ...Scopemethod) ([]*T, error)
+	// Count 查询数量
+	Count(wheres ...Scopemethod) (int64, error)
 	// Create 创建数据
 	Create(m *T) error
 	// Update 更新数据
@@ -34,6 +36,8 @@ type IAction[T any] interface {
 	WithContext(ctx context.Context) IAction[T]
 	// WithTabler 设置Tabler
 	WithTabler(tabler schema.Tabler) IAction[T]
+	// WithModel 设置Model
+	WithModel(model any) IAction[T]
 	// Preload 预加载
 	Preload(preloadKey string, wheres ...Scopemethod) IAction[T]
 	// Joins 设置关联
@@ -91,7 +95,11 @@ func WithTabler[T any](tabler schema.Tabler) ActionOption[T] {
 }
 
 func (a *Action[T]) DB() *gorm.DB {
-	return a.db
+	if a.Tabler != nil {
+		return a.db.Table(a.Tabler.TableName())
+	}
+	var m T
+	return a.db.Model(&m)
 }
 
 func (a *Action[T]) Clauses(conds ...clause.Expression) IAction[T] {
@@ -118,6 +126,11 @@ func (a *Action[T]) WithTabler(tabler schema.Tabler) IAction[T] {
 	return a
 }
 
+func (a *Action[T]) WithModel(model any) IAction[T] {
+	a.db = a.db.Model(model)
+	return a
+}
+
 func (a *Action[T]) Preload(preloadKey string, wheres ...Scopemethod) IAction[T] {
 	a.db = a.db.Preload(preloadKey, func(db *gorm.DB) *gorm.DB {
 		return db.Scopes(wheres...)
@@ -140,7 +153,7 @@ func (a *Action[T]) Scopes(wheres ...Scopemethod) IAction[T] {
 // First 查询单条数据
 func (a *Action[T]) First(wheres ...Scopemethod) (*T, error) {
 	var m T
-	if err := a.db.WithContext(a.ctx).Scopes(wheres...).First(&m).Error; err != nil {
+	if err := a.DB().WithContext(a.ctx).Scopes(wheres...).First(&m).Error; err != nil {
 		return nil, err
 	}
 
@@ -151,7 +164,7 @@ func (a *Action[T]) First(wheres ...Scopemethod) (*T, error) {
 func (a *Action[T]) Last(wheres ...Scopemethod) (*T, error) {
 	var m T
 
-	if err := a.db.WithContext(a.ctx).Scopes(wheres...).Last(&m).Error; err != nil {
+	if err := a.DB().WithContext(a.ctx).Scopes(wheres...).Last(&m).Error; err != nil {
 		return nil, err
 	}
 
@@ -161,14 +174,8 @@ func (a *Action[T]) Last(wheres ...Scopemethod) (*T, error) {
 // List 查询多条数据
 func (a *Action[T]) List(pgInfo Pagination, wheres ...Scopemethod) ([]*T, error) {
 	var ms []*T
-	var m T
-	db := a.db
-	if a.Tabler == nil {
-		db.Model(&m)
-	}
 
-	db = db.WithContext(a.ctx).Scopes(wheres...)
-
+	db := a.DB().WithContext(a.ctx).Scopes(wheres...)
 	if pgInfo != nil {
 		var total int64
 		if err := db.WithContext(a.ctx).Count(&total).Error; err != nil {
@@ -185,24 +192,35 @@ func (a *Action[T]) List(pgInfo Pagination, wheres ...Scopemethod) ([]*T, error)
 	return ms, nil
 }
 
+// Count 查询数量
+func (a *Action[T]) Count(wheres ...Scopemethod) (int64, error) {
+	var total int64
+
+	if err := a.DB().WithContext(a.ctx).Scopes(wheres...).Count(&total).Error; err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
 // Create 创建数据
 func (a *Action[T]) Create(newModel *T) error {
-	return a.db.WithContext(a.ctx).Create(newModel).Error
+	return a.DB().WithContext(a.ctx).Create(newModel).Error
 }
 
 // Update 更新数据
 func (a *Action[T]) Update(newModel *T, wheres ...Scopemethod) error {
-	return a.db.WithContext(a.ctx).Scopes(wheres...).Updates(newModel).Error
+	return a.DB().WithContext(a.ctx).Scopes(wheres...).Updates(newModel).Error
 }
 
 // Delete 删除数据
 func (a *Action[T]) Delete(wheres ...Scopemethod) error {
 	var m T
-	return a.db.WithContext(a.ctx).Scopes(wheres...).Delete(&m).Error
+	return a.DB().WithContext(a.ctx).Scopes(wheres...).Delete(&m).Error
 }
 
 // ForcedDelete 强制删除数据
 func (a *Action[T]) ForcedDelete(wheres ...Scopemethod) error {
 	var m T
-	return a.db.WithContext(a.ctx).Unscoped().Scopes(wheres...).Delete(&m).Error
+	return a.DB().WithContext(a.ctx).Unscoped().Scopes(wheres...).Delete(&m).Error
 }
