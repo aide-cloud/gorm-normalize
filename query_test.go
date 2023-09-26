@@ -44,6 +44,11 @@ func initMysqlDB(dsn string, debug bool) {
 			db = db.Debug()
 		}
 
+		// 注册opentracing插件
+		if err := db.Use(NewOpentracingPlugin()); err != nil {
+			panic(err)
+		}
+
 		_db = db
 	})
 }
