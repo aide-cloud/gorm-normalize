@@ -2,6 +2,12 @@
 
 > 让gorm使用过程中更加规范, 而不是一个项目里面各种风格都有
 
+## 安装
+
+```shell
+go get -u github.com/aide-cloud/gorm-normalize@latest
+```
+
 1. 区别于直接使用gorm, 使其更加规范
    1. 结构上的规范
    2. 查询上的规范
