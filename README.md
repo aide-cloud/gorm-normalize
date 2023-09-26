@@ -16,8 +16,9 @@ go get -u github.com/aide-cloud/gorm-normalize@latest
    1. 不用生成代码, 直接使用
    2. 减少代码量, 更加简洁灵活
 
+## 使用
 
-## 1. Model
+### 1. Model
 
 > 声明model时, 需要继承`query.BaseModel`
 
@@ -91,7 +92,7 @@ func (File) TableName() string {
 }
 ```
 
-## 2. Data
+### 2. Data
 
 > 声明data操作时, 需要继承`query.IAction`, 这是一个接口, 里面包含了常用的操作方法, 可以自定义实现
 >
@@ -141,7 +142,7 @@ func (l *User) PreloadFiles(scops ...query.Scopemethod) query.Scopemethod {
 }
 ```
 
-## service
+### 3. service
 
 > 声明service, 用于处理业务逻辑, 例如, 你需要获取用户详情, 那么你可以在这里处理, 如下所示
 > 
