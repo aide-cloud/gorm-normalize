@@ -10,7 +10,7 @@ import (
 
 var _ IAction[any] = (*Action[any])(nil)
 
-type IAction[T any] interface {
+type IOpration[T any] interface {
 	// First 查询单条数据
 	First(wheres ...Scopemethod) (*T, error)
 	// Last 查询单条数据
@@ -27,9 +27,9 @@ type IAction[T any] interface {
 	Delete(wheres ...Scopemethod) error
 	// ForcedDelete 强制删除数据
 	ForcedDelete(wheres ...Scopemethod) error
+}
 
-	DB() *gorm.DB
-
+type IBind[T any] interface {
 	// WithDB 设置DB
 	WithDB(db *gorm.DB) IAction[T]
 	// WithContext 设置Ctx
@@ -50,6 +50,13 @@ type IAction[T any] interface {
 
 	// Clauses 设置Clauses
 	Clauses(conds ...clause.Expression) IAction[T]
+}
+
+type IAction[T any] interface {
+	IOpration[T]
+	IBind[T]
+
+	DB() *gorm.DB
 }
 
 type Action[T any] struct {
