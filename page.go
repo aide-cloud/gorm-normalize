@@ -3,32 +3,32 @@ package query
 var _ Pagination = (*Page)(nil)
 
 type Pagination interface {
-	Page() int
-	Size() int
+	GetCurr() int
+	GetSize() int
 	SetTotal(total int64)
 }
 
 type Page struct {
-	page  int
-	size  int
-	total int64
+	Curr  int   `json:"curr"`
+	Size  int   `json:"size"`
+	Total int64 `json:"total"`
 }
 
-func NewPage(page, size int) *Page {
+func NewPage(curr, size int) *Page {
 	return &Page{
-		page: page,
-		size: size,
+		Curr: curr,
+		Size: size,
 	}
 }
 
-func (p *Page) Page() int {
-	return p.page
+func (p *Page) GetCurr() int {
+	return p.Curr
 }
 
-func (p *Page) Size() int {
-	return p.size
+func (p *Page) GetSize() int {
+	return p.Size
 }
 
 func (p *Page) SetTotal(total int64) {
-	p.total = total
+	p.Total = total
 }

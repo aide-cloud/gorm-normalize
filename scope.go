@@ -58,6 +58,6 @@ func Paginate(pgInfo Pagination) Scopemethod {
 		if pgInfo == nil {
 			return db
 		}
-		return db.Limit(pgInfo.Size()).Offset((pgInfo.Page() - 1) * pgInfo.Size())
+		return db.Limit(pgInfo.GetSize()).Offset((pgInfo.GetCurr() - 1) * pgInfo.GetSize())
 	}
 }
