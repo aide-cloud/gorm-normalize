@@ -74,10 +74,11 @@ func (op *OpentracingPlugin) Initialize(db *gorm.DB) (err error) {
 }
 
 func before(db *gorm.DB) {
-	_, span := otel.Tracer("gorm").Start(db.Statement.Context, "gorm")
+	ctx, span := otel.Tracer("gorm").Start(db.Statement.Context, "gorm")
 	// 利用db实例去传递span
 	db.InstanceSet(gormSpanKey, span)
 	db.InstanceSet(gormTime, time.Now())
+	db.Statement.Context = ctx
 }
 
 func after(db *gorm.DB) {
