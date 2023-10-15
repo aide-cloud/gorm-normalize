@@ -40,8 +40,12 @@ type IOpration[T any] interface {
 	Create(m *T) error
 	// Update 更新数据
 	Update(m *T, wheres ...Scopemethod) error
+	// UpdateByMap 通过map更新数据
+	UpdateMap(m map[string]any, wheres ...Scopemethod) error
 	// UpdateByID 根据ID更新数据
 	UpdateByID(id uint, m *T, wheres ...Scopemethod) error
+	// UpdateByID 根据ID更新数据
+	UpdateMapByID(id uint, m map[string]any, wheres ...Scopemethod) error
 	// Delete 删除数据
 	Delete(wheres ...Scopemethod) error
 	// DeleteByID 根据ID删除数据
@@ -505,8 +509,30 @@ func (a *Action[T]) Update(newModel *T, wheres ...Scopemethod) error {
 	return a.DB().WithContext(ctx).Scopes(wheres...).Updates(newModel).Error
 }
 
+// UpdateMap 更新数据
+func (a *Action[T]) UpdateMap(newModel map[string]any, wheres ...Scopemethod) error {
+	ctx := a.ctx
+	if a.enableTrace {
+		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "Update")
+		defer span.End()
+		ctx = _ctx
+	}
+	return a.DB().WithContext(ctx).Scopes(wheres...).Updates(newModel).Error
+}
+
 // UpdateByID 根据ID更新数据
 func (a *Action[T]) UpdateByID(id uint, newModel *T, wheres ...Scopemethod) error {
+	ctx := a.ctx
+	if a.enableTrace {
+		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "UpdateByID")
+		defer span.End()
+		ctx = _ctx
+	}
+	return a.DB().WithContext(ctx).Scopes(append(wheres, WhereID(id))...).Updates(newModel).Error
+}
+
+// UpdateMapByID 根据ID更新数据
+func (a *Action[T]) UpdateMapByID(id uint, newModel map[string]any, wheres ...Scopemethod) error {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "UpdateByID")
