@@ -11,49 +11,49 @@ import (
 
 var _ IAction[any] = (*Action[any])(nil)
 
-type IOpration[T any] interface {
+type IOperation[T any] interface {
 	// First 查询单条数据
-	First(wheres ...Scopemethod) (*T, error)
+	First(wheres ...ScopeMethod) (*T, error)
 	// FirstWithTrashed 查询单条数据(包含软删除数据)
-	FirstWithTrashed(wheres ...Scopemethod) (*T, error)
+	FirstWithTrashed(wheres ...ScopeMethod) (*T, error)
 	// FirstByID 根据ID查询单条数据
-	FirstByID(id uint, wheres ...Scopemethod) (*T, error)
+	FirstByID(id uint, wheres ...ScopeMethod) (*T, error)
 	// FirstByIDWithTrashed 根据ID查询单条数据(包含软删除数据)
-	FirstByIDWithTrashed(id uint, wheres ...Scopemethod) (*T, error)
+	FirstByIDWithTrashed(id uint, wheres ...ScopeMethod) (*T, error)
 	// Last 查询单条数据
-	Last(wheres ...Scopemethod) (*T, error)
+	Last(wheres ...ScopeMethod) (*T, error)
 	// LastWithTrashed 查询单条数据(包含软删除数据)
-	LastWithTrashed(wheres ...Scopemethod) (*T, error)
+	LastWithTrashed(wheres ...ScopeMethod) (*T, error)
 	// LastByID 根据ID查询单条数据
-	LastByID(id uint, wheres ...Scopemethod) (*T, error)
+	LastByID(id uint, wheres ...ScopeMethod) (*T, error)
 	// LastByIDWithTrashed 根据ID查询单条数据(包含软删除数据)
-	LastByIDWithTrashed(id uint, wheres ...Scopemethod) (*T, error)
+	LastByIDWithTrashed(id uint, wheres ...ScopeMethod) (*T, error)
 	// List 查询多条数据
-	List(pgInfo Pagination, wheres ...Scopemethod) ([]*T, error)
+	List(pgInfo Pagination, wheres ...ScopeMethod) ([]*T, error)
 	// ListWithTrashed 查询多条数据(包含软删除数据)
-	ListWithTrashed(pgInfo Pagination, wheres ...Scopemethod) ([]*T, error)
+	ListWithTrashed(pgInfo Pagination, wheres ...ScopeMethod) ([]*T, error)
 	// Count 查询数量
-	Count(wheres ...Scopemethod) (int64, error)
+	Count(wheres ...ScopeMethod) (int64, error)
 	// CountWithTrashed 查询数量(包含软删除数据)
-	CountWithTrashed(wheres ...Scopemethod) (int64, error)
+	CountWithTrashed(wheres ...ScopeMethod) (int64, error)
 	// Create 创建数据
 	Create(m *T) error
 	// Update 更新数据
-	Update(m *T, wheres ...Scopemethod) error
-	// UpdateByMap 通过map更新数据
-	UpdateMap(m map[string]any, wheres ...Scopemethod) error
+	Update(m *T, wheres ...ScopeMethod) error
+	// UpdateMap 通过map更新数据
+	UpdateMap(m map[string]any, wheres ...ScopeMethod) error
 	// UpdateByID 根据ID更新数据
-	UpdateByID(id uint, m *T, wheres ...Scopemethod) error
-	// UpdateByID 根据ID更新数据
-	UpdateMapByID(id uint, m map[string]any, wheres ...Scopemethod) error
+	UpdateByID(id uint, m *T, wheres ...ScopeMethod) error
+	// UpdateMapByID 根据ID更新数据
+	UpdateMapByID(id uint, m map[string]any, wheres ...ScopeMethod) error
 	// Delete 删除数据
-	Delete(wheres ...Scopemethod) error
+	Delete(wheres ...ScopeMethod) error
 	// DeleteByID 根据ID删除数据
-	DeleteByID(id uint, wheres ...Scopemethod) error
+	DeleteByID(id uint, wheres ...ScopeMethod) error
 	// ForcedDelete 强制删除数据
-	ForcedDelete(wheres ...Scopemethod) error
+	ForcedDelete(wheres ...ScopeMethod) error
 	// ForcedDeleteByID 根据ID强制删除数据
-	ForcedDeleteByID(id uint, wheres ...Scopemethod) error
+	ForcedDeleteByID(id uint, wheres ...ScopeMethod) error
 }
 
 type AssociationKey string
@@ -107,22 +107,22 @@ type IBind[T any] interface {
 	WithDB(db *gorm.DB) IAction[T]
 	// WithContext 设置Ctx
 	WithContext(ctx context.Context) IAction[T]
-	// WithTabler 设置Tabler
-	WithTabler(tabler schema.Tabler) IAction[T]
+	// WithTable 设置Table
+	WithTable(table schema.Tabler) IAction[T]
 	// WithModel 设置Model
 	WithModel(model any) IAction[T]
 	// Preload 预加载
-	Preload(preloadKey string, wheres ...Scopemethod) IAction[T]
+	Preload(preloadKey string, wheres ...ScopeMethod) IAction[T]
 	// Joins 设置关联
-	Joins(joinsKey string, wheres ...Scopemethod) IAction[T]
+	Joins(joinsKey string, wheres ...ScopeMethod) IAction[T]
 	// Scopes 设置作用域
-	Scopes(wheres ...Scopemethod) IAction[T]
+	Scopes(wheres ...ScopeMethod) IAction[T]
 
 	// Order 排序
 	Order(column string) IOrder[T]
 
 	// Clauses 设置Clauses
-	Clauses(conds ...clause.Expression) IAction[T]
+	Clauses(condList ...clause.Expression) IAction[T]
 
 	// OpenTrace 开启trace
 	OpenTrace() IAction[T]
@@ -131,7 +131,7 @@ type IBind[T any] interface {
 }
 
 type IAction[T any] interface {
-	IOpration[T]
+	IOperation[T]
 	IBind[T]
 
 	DB() *gorm.DB
@@ -190,10 +190,10 @@ func WithContext[T any](ctx context.Context) ActionOption[T] {
 	}
 }
 
-// WithTabler 设置Tabler
-func WithTabler[T any](tabler schema.Tabler) ActionOption[T] {
+// WithTable 设置Table
+func WithTable[T any](table schema.Tabler) ActionOption[T] {
 	return func(a *Action[T]) {
-		a.Tabler = tabler
+		a.Tabler = table
 	}
 }
 
@@ -219,8 +219,8 @@ func (a *Action[T]) DB() *gorm.DB {
 	return a.db.Model(&m)
 }
 
-func (a *Action[T]) Clauses(conds ...clause.Expression) IAction[T] {
-	a.db = a.db.Clauses(conds...)
+func (a *Action[T]) Clauses(condList ...clause.Expression) IAction[T] {
+	a.db = a.db.Clauses(condList...)
 	return a
 }
 
@@ -238,7 +238,7 @@ func (a *Action[T]) WithContext(ctx context.Context) IAction[T] {
 	return a
 }
 
-func (a *Action[T]) WithTabler(tabler schema.Tabler) IAction[T] {
+func (a *Action[T]) WithTable(tabler schema.Tabler) IAction[T] {
 	a.Tabler = tabler
 	return a
 }
@@ -248,27 +248,27 @@ func (a *Action[T]) WithModel(model any) IAction[T] {
 	return a
 }
 
-func (a *Action[T]) Preload(preloadKey string, wheres ...Scopemethod) IAction[T] {
+func (a *Action[T]) Preload(preloadKey string, wheres ...ScopeMethod) IAction[T] {
 	a.db = a.db.Preload(preloadKey, func(db *gorm.DB) *gorm.DB {
 		return db.Scopes(wheres...)
 	})
 	return a
 }
 
-func (a *Action[T]) Joins(joinsKey string, wheres ...Scopemethod) IAction[T] {
+func (a *Action[T]) Joins(joinsKey string, wheres ...ScopeMethod) IAction[T] {
 	a.db = a.db.Joins(joinsKey, func(db *gorm.DB) *gorm.DB {
 		return db.Scopes(wheres...)
 	})
 	return a
 }
 
-func (a *Action[T]) Scopes(wheres ...Scopemethod) IAction[T] {
+func (a *Action[T]) Scopes(wheres ...ScopeMethod) IAction[T] {
 	a.db = a.db.Scopes(wheres...)
 	return a
 }
 
 // First 查询单条数据
-func (a *Action[T]) First(wheres ...Scopemethod) (*T, error) {
+func (a *Action[T]) First(wheres ...ScopeMethod) (*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "First")
@@ -284,7 +284,7 @@ func (a *Action[T]) First(wheres ...Scopemethod) (*T, error) {
 }
 
 // FirstWithTrashed 查询单条数据(包含软删除数据)
-func (a *Action[T]) FirstWithTrashed(wheres ...Scopemethod) (*T, error) {
+func (a *Action[T]) FirstWithTrashed(wheres ...ScopeMethod) (*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "FirstWithTrashed")
@@ -300,7 +300,7 @@ func (a *Action[T]) FirstWithTrashed(wheres ...Scopemethod) (*T, error) {
 }
 
 // FirstByID 根据ID查询单条数据
-func (a *Action[T]) FirstByID(id uint, wheres ...Scopemethod) (*T, error) {
+func (a *Action[T]) FirstByID(id uint, wheres ...ScopeMethod) (*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "FirstByID")
@@ -316,7 +316,7 @@ func (a *Action[T]) FirstByID(id uint, wheres ...Scopemethod) (*T, error) {
 }
 
 // FirstByIDWithTrashed 根据ID查询单条数据(包含软删除数据)
-func (a *Action[T]) FirstByIDWithTrashed(id uint, wheres ...Scopemethod) (*T, error) {
+func (a *Action[T]) FirstByIDWithTrashed(id uint, wheres ...ScopeMethod) (*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "FirstByIDWithTrashed")
@@ -332,7 +332,7 @@ func (a *Action[T]) FirstByIDWithTrashed(id uint, wheres ...Scopemethod) (*T, er
 }
 
 // Last 查询单条数据
-func (a *Action[T]) Last(wheres ...Scopemethod) (*T, error) {
+func (a *Action[T]) Last(wheres ...ScopeMethod) (*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "Last")
@@ -349,7 +349,7 @@ func (a *Action[T]) Last(wheres ...Scopemethod) (*T, error) {
 }
 
 // LastWithTrashed 查询单条数据(包含软删除数据)
-func (a *Action[T]) LastWithTrashed(wheres ...Scopemethod) (*T, error) {
+func (a *Action[T]) LastWithTrashed(wheres ...ScopeMethod) (*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "LastWithTrashed")
@@ -366,7 +366,7 @@ func (a *Action[T]) LastWithTrashed(wheres ...Scopemethod) (*T, error) {
 }
 
 // LastByID 根据ID查询单条数据
-func (a *Action[T]) LastByID(id uint, wheres ...Scopemethod) (*T, error) {
+func (a *Action[T]) LastByID(id uint, wheres ...ScopeMethod) (*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "LastByID")
@@ -383,7 +383,7 @@ func (a *Action[T]) LastByID(id uint, wheres ...Scopemethod) (*T, error) {
 }
 
 // LastByIDWithTrashed 根据ID查询单条数据(包含软删除数据)
-func (a *Action[T]) LastByIDWithTrashed(id uint, wheres ...Scopemethod) (*T, error) {
+func (a *Action[T]) LastByIDWithTrashed(id uint, wheres ...ScopeMethod) (*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "LastByIDWithTrashed")
@@ -400,7 +400,7 @@ func (a *Action[T]) LastByIDWithTrashed(id uint, wheres ...Scopemethod) (*T, err
 }
 
 // List 查询多条数据
-func (a *Action[T]) List(pgInfo Pagination, wheres ...Scopemethod) ([]*T, error) {
+func (a *Action[T]) List(pgInfo Pagination, wheres ...ScopeMethod) ([]*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "List")
@@ -427,7 +427,7 @@ func (a *Action[T]) List(pgInfo Pagination, wheres ...Scopemethod) ([]*T, error)
 }
 
 // ListWithTrashed 查询多条数据(包含软删除数据)
-func (a *Action[T]) ListWithTrashed(pgInfo Pagination, wheres ...Scopemethod) ([]*T, error) {
+func (a *Action[T]) ListWithTrashed(pgInfo Pagination, wheres ...ScopeMethod) ([]*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "ListWithTrashed")
@@ -454,7 +454,7 @@ func (a *Action[T]) ListWithTrashed(pgInfo Pagination, wheres ...Scopemethod) ([
 }
 
 // Count 查询数量
-func (a *Action[T]) Count(wheres ...Scopemethod) (int64, error) {
+func (a *Action[T]) Count(wheres ...ScopeMethod) (int64, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "Count")
@@ -471,7 +471,7 @@ func (a *Action[T]) Count(wheres ...Scopemethod) (int64, error) {
 }
 
 // CountWithTrashed 查询数量(包含软删除数据)
-func (a *Action[T]) CountWithTrashed(wheres ...Scopemethod) (int64, error) {
+func (a *Action[T]) CountWithTrashed(wheres ...ScopeMethod) (int64, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "CountWithTrashed")
@@ -499,7 +499,7 @@ func (a *Action[T]) Create(newModel *T) error {
 }
 
 // Update 更新数据
-func (a *Action[T]) Update(newModel *T, wheres ...Scopemethod) error {
+func (a *Action[T]) Update(newModel *T, wheres ...ScopeMethod) error {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "Update")
@@ -510,7 +510,7 @@ func (a *Action[T]) Update(newModel *T, wheres ...Scopemethod) error {
 }
 
 // UpdateMap 更新数据
-func (a *Action[T]) UpdateMap(newModel map[string]any, wheres ...Scopemethod) error {
+func (a *Action[T]) UpdateMap(newModel map[string]any, wheres ...ScopeMethod) error {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "Update")
@@ -521,7 +521,7 @@ func (a *Action[T]) UpdateMap(newModel map[string]any, wheres ...Scopemethod) er
 }
 
 // UpdateByID 根据ID更新数据
-func (a *Action[T]) UpdateByID(id uint, newModel *T, wheres ...Scopemethod) error {
+func (a *Action[T]) UpdateByID(id uint, newModel *T, wheres ...ScopeMethod) error {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "UpdateByID")
@@ -532,7 +532,7 @@ func (a *Action[T]) UpdateByID(id uint, newModel *T, wheres ...Scopemethod) erro
 }
 
 // UpdateMapByID 根据ID更新数据
-func (a *Action[T]) UpdateMapByID(id uint, newModel map[string]any, wheres ...Scopemethod) error {
+func (a *Action[T]) UpdateMapByID(id uint, newModel map[string]any, wheres ...ScopeMethod) error {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "UpdateByID")
@@ -543,7 +543,7 @@ func (a *Action[T]) UpdateMapByID(id uint, newModel map[string]any, wheres ...Sc
 }
 
 // Delete 删除数据
-func (a *Action[T]) Delete(wheres ...Scopemethod) error {
+func (a *Action[T]) Delete(wheres ...ScopeMethod) error {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "Delete")
@@ -555,7 +555,7 @@ func (a *Action[T]) Delete(wheres ...Scopemethod) error {
 }
 
 // DeleteByID 根据ID删除数据
-func (a *Action[T]) DeleteByID(id uint, wheres ...Scopemethod) error {
+func (a *Action[T]) DeleteByID(id uint, wheres ...ScopeMethod) error {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "DeleteByID")
@@ -567,7 +567,7 @@ func (a *Action[T]) DeleteByID(id uint, wheres ...Scopemethod) error {
 }
 
 // ForcedDelete 强制删除数据
-func (a *Action[T]) ForcedDelete(wheres ...Scopemethod) error {
+func (a *Action[T]) ForcedDelete(wheres ...ScopeMethod) error {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "ForcedDelete")
@@ -579,7 +579,7 @@ func (a *Action[T]) ForcedDelete(wheres ...Scopemethod) error {
 }
 
 // ForcedDeleteByID 根据ID强制删除数据
-func (a *Action[T]) ForcedDeleteByID(id uint, wheres ...Scopemethod) error {
+func (a *Action[T]) ForcedDeleteByID(id uint, wheres ...ScopeMethod) error {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "ForcedDeleteByID")

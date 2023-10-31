@@ -36,14 +36,11 @@ func NewOrder[T any](column string) *Order[T] {
 }
 
 func (o *Order[T]) Desc() IAction[T] {
-	o.asc = false
-	return o.IAction.WithDB(o.IAction.DB().Order("`" + o.column + "` " + o.asc.String()))
+	return o.IAction.WithDB(o.IAction.DB().Order("`" + o.column + "` " + ASC.String()))
 }
 
 func (o *Order[T]) Asc() IAction[T] {
-	o.asc = true
-
-	return o.IAction.WithDB(o.IAction.DB().Order("`" + o.column + "` " + o.asc.String()))
+	return o.IAction.WithDB(o.IAction.DB().Order("`" + o.column + "` " + DESC.String()))
 }
 
 func (o *Order[T]) WithIAction(action IAction[T]) *Order[T] {
