@@ -31,6 +31,6 @@ func WithContext[T any](ctx context.Context) ActionOption[T] {
 // WithTable 设置Table
 func WithTable[T any](table schema.Tabler) ActionOption[T] {
 	return func(a *action[T]) {
-		a.Tabler = table
+		a.table = table
 	}
 }
