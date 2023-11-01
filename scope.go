@@ -60,3 +60,8 @@ func Paginate(pgInfo Pagination) ScopeMethod {
 		return db.Limit(pgInfo.GetSize()).Offset((pgInfo.GetCurr() - 1) * pgInfo.GetSize())
 	}
 }
+
+// WithTrashed 包含软删除数据
+func WithTrashed(db *gorm.DB) *gorm.DB {
+	return db.Unscoped()
+}

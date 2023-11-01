@@ -21,6 +21,33 @@ var _ gorm.Plugin = (*OpentracingPlugin)(nil)
 
 type OpentracingPlugin struct{}
 
+type tracerImpl struct {
+	// 开启trace
+	enableTrace bool
+}
+
+func (l *tracerImpl) OpenTrace() Tracer {
+	l.enableTrace = true
+	return l
+}
+
+func (l *tracerImpl) CloseTrace() Tracer {
+	l.enableTrace = false
+	return l
+}
+
+func (l *tracerImpl) IsEnableTrace() bool {
+	return l.enableTrace
+}
+
+// NewITracer 创建Tracer
+func NewITracer() Tracer {
+	t := &tracerImpl{}
+	// 默认开启
+	t.enableTrace = true
+	return t
+}
+
 // NewOpentracingPlugin 创建一个opentracing插件
 func NewOpentracingPlugin() *OpentracingPlugin {
 	return &OpentracingPlugin{}

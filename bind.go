@@ -31,8 +31,5 @@ type IBind[T any] interface {
 	// Clauses 设置Clauses
 	Clauses(condList ...clause.Expression) IAction[T]
 
-	// OpenTrace 开启trace
-	OpenTrace() IAction[T]
-	// CloseTrace 关闭trace
-	CloseTrace() IAction[T]
+	DB() *gorm.DB
 }

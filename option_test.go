@@ -5,5 +5,13 @@ import (
 )
 
 func TestOpenTrace(t *testing.T) {
-	NewAction[any](OpenTrace[any](), WithDB[any](nil), WithContext[any](nil), WithTable[any](nil))
+	NewAction[any](
+		WithDB[any](nil),
+		WithContext[any](nil),
+		WithTable[any](nil),
+		WithTracer[any](nil),
+		WithIOperation[any](nil),
+		WithIOperationX[any](nil),
+		WithIAssociation[any](nil),
+	)
 }
