@@ -13,6 +13,7 @@ type (
 	// IAction 操作接口
 	IAction[T any] interface {
 		IOperation[T]
+		IOperationX[T]
 		IBind[T]
 
 		DB() *gorm.DB
@@ -28,10 +29,220 @@ type (
 
 		// 开启trace
 		enableTrace bool
+
+		err error
 	}
 
 	ActionOption[T any] func(a *action[T])
 )
+
+func (a *action[T]) Err() error {
+	return a.err
+}
+
+func (a *action[T]) FirstX(wheres ...ScopeMethod) *T {
+	var m T
+	if err := a.DB().WithContext(a.ctx).Scopes(wheres...).First(&m).Error; err != nil {
+		a.err = err
+		return nil
+	}
+
+	return &m
+}
+
+func (a *action[T]) FirstWithTrashedX(wheres ...ScopeMethod) *T {
+	var m T
+	if err := a.DB().WithContext(a.ctx).Unscoped().Scopes(wheres...).First(&m).Error; err != nil {
+		a.err = err
+		return nil
+	}
+
+	return &m
+}
+
+func (a *action[T]) FirstByIDX(id uint, wheres ...ScopeMethod) *T {
+	var m T
+	if err := a.DB().WithContext(a.ctx).Scopes(wheres...).First(&m, id).Error; err != nil {
+		a.err = err
+		return nil
+	}
+
+	return &m
+}
+
+func (a *action[T]) FirstByIDWithTrashedX(id uint, wheres ...ScopeMethod) *T {
+	var m T
+	if err := a.DB().WithContext(a.ctx).Unscoped().Scopes(wheres...).First(&m, id).Error; err != nil {
+		a.err = err
+		return nil
+	}
+
+	return &m
+}
+
+func (a *action[T]) LastX(wheres ...ScopeMethod) *T {
+	var m T
+	if err := a.DB().WithContext(a.ctx).Scopes(wheres...).Last(&m).Error; err != nil {
+		a.err = err
+		return nil
+	}
+
+	return &m
+}
+
+func (a *action[T]) LastWithTrashedX(wheres ...ScopeMethod) *T {
+	var m T
+	if err := a.DB().WithContext(a.ctx).Unscoped().Scopes(wheres...).Last(&m).Error; err != nil {
+		a.err = err
+		return nil
+	}
+
+	return &m
+}
+
+func (a *action[T]) LastByIDX(id uint, wheres ...ScopeMethod) *T {
+	var m T
+	if err := a.DB().WithContext(a.ctx).Scopes(wheres...).Last(&m, id).Error; err != nil {
+		a.err = err
+		return nil
+	}
+
+	return &m
+}
+
+func (a *action[T]) LastByIDWithTrashedX(id uint, wheres ...ScopeMethod) *T {
+	var m T
+	if err := a.DB().WithContext(a.ctx).Unscoped().Scopes(wheres...).Last(&m, id).Error; err != nil {
+		a.err = err
+		return nil
+	}
+
+	return &m
+}
+
+func (a *action[T]) ListX(pgInfo Pagination, wheres ...ScopeMethod) []*T {
+	var ms []*T
+
+	db := a.DB().WithContext(a.ctx).Scopes(wheres...)
+	if pgInfo != nil {
+		var total int64
+		if err := db.WithContext(a.ctx).Count(&total).Error; err != nil {
+			a.err = err
+			return nil
+		}
+		pgInfo.SetTotal(total)
+		db = db.Scopes(Paginate(pgInfo))
+	}
+
+	if err := db.Find(&ms).Error; err != nil {
+		a.err = err
+		return nil
+	}
+
+	return ms
+}
+
+func (a *action[T]) ListWithTrashedX(pgInfo Pagination, wheres ...ScopeMethod) []*T {
+	var ms []*T
+
+	db := a.DB().WithContext(a.ctx).Unscoped().Scopes(wheres...)
+	if pgInfo != nil {
+		var total int64
+		if err := db.WithContext(a.ctx).Count(&total).Error; err != nil {
+			a.err = err
+			return nil
+		}
+		pgInfo.SetTotal(total)
+		db = db.Scopes(Paginate(pgInfo))
+	}
+
+	if err := db.Find(&ms).Error; err != nil {
+		a.err = err
+		return nil
+	}
+
+	return ms
+}
+
+func (a *action[T]) CountX(wheres ...ScopeMethod) int64 {
+	var total int64
+
+	if err := a.DB().WithContext(a.ctx).Scopes(wheres...).Count(&total).Error; err != nil {
+		a.err = err
+		return 0
+	}
+
+	return total
+}
+
+func (a *action[T]) CountWithTrashedX(wheres ...ScopeMethod) int64 {
+	var total int64
+
+	if err := a.DB().WithContext(a.ctx).Unscoped().Scopes(wheres...).Count(&total).Error; err != nil {
+		a.err = err
+		return 0
+	}
+
+	return total
+}
+
+func (a *action[T]) CreateX(newModel *T) {
+	if err := a.DB().WithContext(a.ctx).Create(newModel).Error; err != nil {
+		a.err = err
+	}
+}
+
+func (a *action[T]) UpdateX(newModel *T, wheres ...ScopeMethod) {
+	if err := a.DB().WithContext(a.ctx).Scopes(wheres...).Updates(newModel).Error; err != nil {
+		a.err = err
+	}
+}
+
+func (a *action[T]) UpdateMapX(newModel map[string]any, wheres ...ScopeMethod) {
+	if err := a.DB().WithContext(a.ctx).Scopes(wheres...).Updates(newModel).Error; err != nil {
+		a.err = err
+	}
+}
+
+func (a *action[T]) UpdateByIDX(id uint, newModel *T, wheres ...ScopeMethod) {
+	if err := a.DB().WithContext(a.ctx).Scopes(append(wheres, WhereID(id))...).Updates(newModel).Error; err != nil {
+		a.err = err
+	}
+}
+
+func (a *action[T]) UpdateMapByIDX(id uint, newModel map[string]any, wheres ...ScopeMethod) {
+	if err := a.DB().WithContext(a.ctx).Scopes(append(wheres, WhereID(id))...).Updates(newModel).Error; err != nil {
+		a.err = err
+	}
+}
+
+func (a *action[T]) DeleteX(wheres ...ScopeMethod) {
+	var m T
+	if err := a.DB().WithContext(a.ctx).Scopes(wheres...).Delete(&m).Error; err != nil {
+		a.err = err
+	}
+}
+
+func (a *action[T]) DeleteByIDX(id uint, wheres ...ScopeMethod) {
+	var m T
+	if err := a.DB().WithContext(a.ctx).Scopes(wheres...).Delete(&m, id).Error; err != nil {
+		a.err = err
+	}
+}
+
+func (a *action[T]) ForcedDeleteX(wheres ...ScopeMethod) {
+	var m T
+	if err := a.DB().WithContext(a.ctx).Unscoped().Scopes(wheres...).Delete(&m).Error; err != nil {
+		a.err = err
+	}
+}
+
+func (a *action[T]) ForcedDeleteByIDX(id uint, wheres ...ScopeMethod) {
+	var m T
+	if err := a.DB().WithContext(a.ctx).Unscoped().Scopes(wheres...).Delete(&m, id).Error; err != nil {
+		a.err = err
+	}
+}
 
 // NewAction 创建GORM操作接口实例
 func NewAction[T any](opts ...ActionOption[T]) IAction[T] {
