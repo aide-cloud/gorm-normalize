@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-var _ IAction[any] = (*Action[any])(nil)
+var _ IAction[any] = (*action[any])(nil)
 
 type IOperation[T any] interface {
 	// First 查询单条数据
@@ -58,6 +58,7 @@ type IOperation[T any] interface {
 
 type AssociationKey string
 
+// IAssociation 关联操作
 type IAssociation interface {
 	// Append 添加关联
 	Append(associationKey AssociationKey, list ...schema.Tabler) error
@@ -71,26 +72,32 @@ type IAssociation interface {
 	Count(associationKey AssociationKey) int64
 }
 
+// defaultAssociation 默认关联操作实现
 type defaultAssociation struct {
 	db *gorm.DB
 }
 
+// Append 添加关联
 func (l *defaultAssociation) Append(associationKey AssociationKey, list ...schema.Tabler) error {
 	return l.db.Association(string(associationKey)).Append(list)
 }
 
+// Replace 替换关联
 func (l *defaultAssociation) Replace(associationKey AssociationKey, list ...schema.Tabler) error {
 	return l.db.Association(string(associationKey)).Replace(list)
 }
 
+// Delete 删除关联
 func (l *defaultAssociation) Delete(associationKey AssociationKey, list ...schema.Tabler) error {
 	return l.db.Association(string(associationKey)).Delete(list)
 }
 
+// Clear 清除关联
 func (l *defaultAssociation) Clear(associationKey AssociationKey) error {
 	return l.db.Association(string(associationKey)).Clear()
 }
 
+// Count 统计关联数量
 func (l *defaultAssociation) Count(associationKey AssociationKey) int64 {
 	return l.db.Association(string(associationKey)).Count()
 }
@@ -102,6 +109,7 @@ func NewDefaultAssociation(db *gorm.DB) IAssociation {
 	}
 }
 
+// IBind 绑定操作, 用于链式操作
 type IBind[T any] interface {
 	// WithDB 设置DB
 	WithDB(db *gorm.DB) IAction[T]
@@ -130,6 +138,7 @@ type IBind[T any] interface {
 	CloseTrace() IAction[T]
 }
 
+// IAction 操作接口
 type IAction[T any] interface {
 	IOperation[T]
 	IBind[T]
@@ -138,7 +147,7 @@ type IAction[T any] interface {
 	Association() IAssociation
 }
 
-type Action[T any] struct {
+type action[T any] struct {
 	db  *gorm.DB
 	ctx context.Context
 	schema.Tabler
@@ -149,69 +158,46 @@ type Action[T any] struct {
 	enableTrace bool
 }
 
-type ActionOption[T any] func(a *Action[T])
+type ActionOption[T any] func(a *action[T])
 
-func NewAction[T any](opts ...ActionOption[T]) *Action[T] {
-	action := Action[T]{
+// NewAction 创建GORM操作接口实例
+func NewAction[T any](opts ...ActionOption[T]) IAction[T] {
+	ac := action[T]{
 		ctx: context.Background(),
 	}
 
 	for _, opt := range opts {
-		opt(&action)
+		opt(&ac)
 	}
 
-	if action.Tabler != nil {
-		action.db = action.db.Table(action.Tabler.TableName())
+	if ac.Tabler != nil {
+		ac.db = ac.db.Table(ac.Tabler.TableName())
 	}
 
-	action.association = NewDefaultAssociation(action.db)
+	ac.association = NewDefaultAssociation(ac.db)
 
-	return &action
+	return &ac
 }
 
-// OpenTrace 开启trace
-func OpenTrace[T any]() ActionOption[T] {
-	return func(a *Action[T]) {
-		a.enableTrace = true
-	}
-}
-
-// WithDB 设置DB
-func WithDB[T any](db *gorm.DB) ActionOption[T] {
-	return func(a *Action[T]) {
-		a.db = db
-	}
-}
-
-// WithContext 设置Ctx
-func WithContext[T any](ctx context.Context) ActionOption[T] {
-	return func(a *Action[T]) {
-		a.ctx = ctx
-	}
-}
-
-// WithTable 设置Table
-func WithTable[T any](table schema.Tabler) ActionOption[T] {
-	return func(a *Action[T]) {
-		a.Tabler = table
-	}
-}
-
-func (a *Action[T]) Association() IAssociation {
+// Association 转移到关联操作
+func (a *action[T]) Association() IAssociation {
 	return a.association
 }
 
-func (a *Action[T]) OpenTrace() IAction[T] {
+// OpenTrace 开启trace
+func (a *action[T]) OpenTrace() IAction[T] {
 	a.enableTrace = true
 	return a
 }
 
-func (a *Action[T]) CloseTrace() IAction[T] {
+// CloseTrace 关闭trace
+func (a *action[T]) CloseTrace() IAction[T] {
 	a.enableTrace = false
 	return a
 }
 
-func (a *Action[T]) DB() *gorm.DB {
+// DB 获取DB, 包含了Table或Model, 用于链式操作
+func (a *action[T]) DB() *gorm.DB {
 	if a.Tabler != nil {
 		return a.db.Table(a.Tabler.TableName())
 	}
@@ -219,56 +205,65 @@ func (a *Action[T]) DB() *gorm.DB {
 	return a.db.Model(&m)
 }
 
-func (a *Action[T]) Clauses(condList ...clause.Expression) IAction[T] {
+// Clauses 设置Clauses
+func (a *action[T]) Clauses(condList ...clause.Expression) IAction[T] {
 	a.db = a.db.Clauses(condList...)
 	return a
 }
 
-func (a *Action[T]) Order(column string) IOrder[T] {
+// Order 跳转到排序动作
+func (a *action[T]) Order(column string) IOrder[T] {
 	return NewOrder[T](column).WithIAction(a)
 }
 
-func (a *Action[T]) WithDB(db *gorm.DB) IAction[T] {
+// WithDB 设置DB, 一般用于事务, 这里使用事务的DB, 也可以设置新的DB用于链式操作
+func (a *action[T]) WithDB(db *gorm.DB) IAction[T] {
 	a.db = db
 	return a
 }
 
-func (a *Action[T]) WithContext(ctx context.Context) IAction[T] {
+// WithContext 设置上下文Ctx
+func (a *action[T]) WithContext(ctx context.Context) IAction[T] {
 	a.ctx = ctx
 	return a
 }
 
-func (a *Action[T]) WithTable(tabler schema.Tabler) IAction[T] {
+// WithTable 设置Table, 这里传递的是实现了schema.Tabler接口的结构体
+func (a *action[T]) WithTable(tabler schema.Tabler) IAction[T] {
 	a.Tabler = tabler
 	return a
 }
 
-func (a *Action[T]) WithModel(model any) IAction[T] {
+// WithModel 设置Model, Model规范参考: https://gorm.io/zh_CN/docs/models.html
+func (a *action[T]) WithModel(model any) IAction[T] {
 	a.db = a.db.Model(model)
 	return a
 }
 
-func (a *Action[T]) Preload(preloadKey string, wheres ...ScopeMethod) IAction[T] {
+// Preload 预加载, 参考: https://gorm.io/zh_CN/docs/preload.html
+func (a *action[T]) Preload(preloadKey string, wheres ...ScopeMethod) IAction[T] {
 	a.db = a.db.Preload(preloadKey, func(db *gorm.DB) *gorm.DB {
 		return db.Scopes(wheres...)
 	})
 	return a
 }
 
-func (a *Action[T]) Joins(joinsKey string, wheres ...ScopeMethod) IAction[T] {
+// Joins 设置关联, 参考: https://gorm.io/zh_CN/docs/preload.html#Joins-%E9%A2%84%E5%8A%A0%E8%BD%BD
+func (a *action[T]) Joins(joinsKey string, wheres ...ScopeMethod) IAction[T] {
 	a.db = a.db.Joins(joinsKey, func(db *gorm.DB) *gorm.DB {
 		return db.Scopes(wheres...)
 	})
 	return a
 }
 
-func (a *Action[T]) Scopes(wheres ...ScopeMethod) IAction[T] {
+// Scopes 设置作用域, 参考: https://gorm.io/zh_CN/docs/scopes.html
+func (a *action[T]) Scopes(wheres ...ScopeMethod) IAction[T] {
 	a.db = a.db.Scopes(wheres...)
 	return a
 }
 
 // First 查询单条数据
-func (a *Action[T]) First(wheres ...ScopeMethod) (*T, error) {
+func (a *action[T]) First(wheres ...ScopeMethod) (*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "First")
@@ -284,7 +279,7 @@ func (a *Action[T]) First(wheres ...ScopeMethod) (*T, error) {
 }
 
 // FirstWithTrashed 查询单条数据(包含软删除数据)
-func (a *Action[T]) FirstWithTrashed(wheres ...ScopeMethod) (*T, error) {
+func (a *action[T]) FirstWithTrashed(wheres ...ScopeMethod) (*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "FirstWithTrashed")
@@ -300,7 +295,7 @@ func (a *Action[T]) FirstWithTrashed(wheres ...ScopeMethod) (*T, error) {
 }
 
 // FirstByID 根据ID查询单条数据
-func (a *Action[T]) FirstByID(id uint, wheres ...ScopeMethod) (*T, error) {
+func (a *action[T]) FirstByID(id uint, wheres ...ScopeMethod) (*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "FirstByID")
@@ -316,7 +311,7 @@ func (a *Action[T]) FirstByID(id uint, wheres ...ScopeMethod) (*T, error) {
 }
 
 // FirstByIDWithTrashed 根据ID查询单条数据(包含软删除数据)
-func (a *Action[T]) FirstByIDWithTrashed(id uint, wheres ...ScopeMethod) (*T, error) {
+func (a *action[T]) FirstByIDWithTrashed(id uint, wheres ...ScopeMethod) (*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "FirstByIDWithTrashed")
@@ -332,7 +327,7 @@ func (a *Action[T]) FirstByIDWithTrashed(id uint, wheres ...ScopeMethod) (*T, er
 }
 
 // Last 查询单条数据
-func (a *Action[T]) Last(wheres ...ScopeMethod) (*T, error) {
+func (a *action[T]) Last(wheres ...ScopeMethod) (*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "Last")
@@ -349,7 +344,7 @@ func (a *Action[T]) Last(wheres ...ScopeMethod) (*T, error) {
 }
 
 // LastWithTrashed 查询单条数据(包含软删除数据)
-func (a *Action[T]) LastWithTrashed(wheres ...ScopeMethod) (*T, error) {
+func (a *action[T]) LastWithTrashed(wheres ...ScopeMethod) (*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "LastWithTrashed")
@@ -366,7 +361,7 @@ func (a *Action[T]) LastWithTrashed(wheres ...ScopeMethod) (*T, error) {
 }
 
 // LastByID 根据ID查询单条数据
-func (a *Action[T]) LastByID(id uint, wheres ...ScopeMethod) (*T, error) {
+func (a *action[T]) LastByID(id uint, wheres ...ScopeMethod) (*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "LastByID")
@@ -383,7 +378,7 @@ func (a *Action[T]) LastByID(id uint, wheres ...ScopeMethod) (*T, error) {
 }
 
 // LastByIDWithTrashed 根据ID查询单条数据(包含软删除数据)
-func (a *Action[T]) LastByIDWithTrashed(id uint, wheres ...ScopeMethod) (*T, error) {
+func (a *action[T]) LastByIDWithTrashed(id uint, wheres ...ScopeMethod) (*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "LastByIDWithTrashed")
@@ -400,7 +395,7 @@ func (a *Action[T]) LastByIDWithTrashed(id uint, wheres ...ScopeMethod) (*T, err
 }
 
 // List 查询多条数据
-func (a *Action[T]) List(pgInfo Pagination, wheres ...ScopeMethod) ([]*T, error) {
+func (a *action[T]) List(pgInfo Pagination, wheres ...ScopeMethod) ([]*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "List")
@@ -427,7 +422,7 @@ func (a *Action[T]) List(pgInfo Pagination, wheres ...ScopeMethod) ([]*T, error)
 }
 
 // ListWithTrashed 查询多条数据(包含软删除数据)
-func (a *Action[T]) ListWithTrashed(pgInfo Pagination, wheres ...ScopeMethod) ([]*T, error) {
+func (a *action[T]) ListWithTrashed(pgInfo Pagination, wheres ...ScopeMethod) ([]*T, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "ListWithTrashed")
@@ -454,7 +449,7 @@ func (a *Action[T]) ListWithTrashed(pgInfo Pagination, wheres ...ScopeMethod) ([
 }
 
 // Count 查询数量
-func (a *Action[T]) Count(wheres ...ScopeMethod) (int64, error) {
+func (a *action[T]) Count(wheres ...ScopeMethod) (int64, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "Count")
@@ -471,7 +466,7 @@ func (a *Action[T]) Count(wheres ...ScopeMethod) (int64, error) {
 }
 
 // CountWithTrashed 查询数量(包含软删除数据)
-func (a *Action[T]) CountWithTrashed(wheres ...ScopeMethod) (int64, error) {
+func (a *action[T]) CountWithTrashed(wheres ...ScopeMethod) (int64, error) {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "CountWithTrashed")
@@ -488,7 +483,7 @@ func (a *Action[T]) CountWithTrashed(wheres ...ScopeMethod) (int64, error) {
 }
 
 // Create 创建数据
-func (a *Action[T]) Create(newModel *T) error {
+func (a *action[T]) Create(newModel *T) error {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "Create")
@@ -499,7 +494,7 @@ func (a *Action[T]) Create(newModel *T) error {
 }
 
 // Update 更新数据
-func (a *Action[T]) Update(newModel *T, wheres ...ScopeMethod) error {
+func (a *action[T]) Update(newModel *T, wheres ...ScopeMethod) error {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "Update")
@@ -510,7 +505,7 @@ func (a *Action[T]) Update(newModel *T, wheres ...ScopeMethod) error {
 }
 
 // UpdateMap 更新数据
-func (a *Action[T]) UpdateMap(newModel map[string]any, wheres ...ScopeMethod) error {
+func (a *action[T]) UpdateMap(newModel map[string]any, wheres ...ScopeMethod) error {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "Update")
@@ -521,7 +516,7 @@ func (a *Action[T]) UpdateMap(newModel map[string]any, wheres ...ScopeMethod) er
 }
 
 // UpdateByID 根据ID更新数据
-func (a *Action[T]) UpdateByID(id uint, newModel *T, wheres ...ScopeMethod) error {
+func (a *action[T]) UpdateByID(id uint, newModel *T, wheres ...ScopeMethod) error {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "UpdateByID")
@@ -532,7 +527,7 @@ func (a *Action[T]) UpdateByID(id uint, newModel *T, wheres ...ScopeMethod) erro
 }
 
 // UpdateMapByID 根据ID更新数据
-func (a *Action[T]) UpdateMapByID(id uint, newModel map[string]any, wheres ...ScopeMethod) error {
+func (a *action[T]) UpdateMapByID(id uint, newModel map[string]any, wheres ...ScopeMethod) error {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "UpdateByID")
@@ -543,7 +538,7 @@ func (a *Action[T]) UpdateMapByID(id uint, newModel map[string]any, wheres ...Sc
 }
 
 // Delete 删除数据
-func (a *Action[T]) Delete(wheres ...ScopeMethod) error {
+func (a *action[T]) Delete(wheres ...ScopeMethod) error {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "Delete")
@@ -555,7 +550,7 @@ func (a *Action[T]) Delete(wheres ...ScopeMethod) error {
 }
 
 // DeleteByID 根据ID删除数据
-func (a *Action[T]) DeleteByID(id uint, wheres ...ScopeMethod) error {
+func (a *action[T]) DeleteByID(id uint, wheres ...ScopeMethod) error {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "DeleteByID")
@@ -567,7 +562,7 @@ func (a *Action[T]) DeleteByID(id uint, wheres ...ScopeMethod) error {
 }
 
 // ForcedDelete 强制删除数据
-func (a *Action[T]) ForcedDelete(wheres ...ScopeMethod) error {
+func (a *action[T]) ForcedDelete(wheres ...ScopeMethod) error {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "ForcedDelete")
@@ -579,7 +574,7 @@ func (a *Action[T]) ForcedDelete(wheres ...ScopeMethod) error {
 }
 
 // ForcedDeleteByID 根据ID强制删除数据
-func (a *Action[T]) ForcedDeleteByID(id uint, wheres ...ScopeMethod) error {
+func (a *action[T]) ForcedDeleteByID(id uint, wheres ...ScopeMethod) error {
 	ctx := a.ctx
 	if a.enableTrace {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(a.ctx, "ForcedDeleteByID")
