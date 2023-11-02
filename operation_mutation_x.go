@@ -27,6 +27,14 @@ func (l *operationMutationX[T]) CreateX(m *T) {
 }
 
 func (l *operationMutationX[T]) BatchCreateX(m []*T, batchSize int) {
+	if len(m) == 0 {
+		return
+	}
+
+	if batchSize <= 0 {
+		batchSize = 1000
+	}
+
 	ctx := l.GetCtx()
 	if l.IsEnableTrace() {
 		_ctx, span := otel.Tracer("gorm-normalize").Start(ctx, "BatchCreateX")
