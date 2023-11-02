@@ -32,6 +32,8 @@ type IOperationQuery[T any] interface {
 type IOperationMutation[T any] interface {
 	// Create 创建数据
 	Create(m *T) error
+	// BatchCreate 批量创建数据
+	BatchCreate(m []*T, max int) error
 	// Update 更新数据
 	Update(m *T, wheres ...ScopeMethod) error
 	// UpdateMap 通过map更新数据

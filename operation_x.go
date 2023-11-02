@@ -34,6 +34,8 @@ type IOperationQueryX[T any] interface {
 type IOperationMutationX[T any] interface {
 	// CreateX 创建数据
 	CreateX(m *T)
+	// BatchCreateX 批量创建数据
+	BatchCreateX(m []*T, batchSize int)
 	// UpdateX 更新数据
 	UpdateX(m *T, wheres ...ScopeMethod)
 	// UpdateMapX 通过map更新数据

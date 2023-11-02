@@ -29,6 +29,7 @@ func (o orderType) String() string {
 	return "DESC"
 }
 
+// NewOrder 实例化排序
 func NewOrder[T any](column string) *Order[T] {
 	return &Order[T]{
 		column: column,

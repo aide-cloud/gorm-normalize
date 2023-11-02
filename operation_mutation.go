@@ -25,6 +25,16 @@ func (l *operationMutation[T]) Create(m *T) error {
 	return l.DB().WithContext(ctx).Create(m).Error
 }
 
+func (l *operationMutation[T]) BatchCreate(m []*T, batchSize int) error {
+	ctx := l.GetCtx()
+	if l.IsEnableTrace() {
+		_ctx, span := otel.Tracer("gorm-normalize").Start(ctx, "BatchCreate")
+		defer span.End()
+		ctx = _ctx
+	}
+	return l.DB().WithContext(ctx).CreateInBatches(m, batchSize).Error
+}
+
 func (l *operationMutation[T]) Update(m *T, wheres ...ScopeMethod) error {
 	ctx := l.GetCtx()
 	if l.IsEnableTrace() {
