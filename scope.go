@@ -11,6 +11,8 @@ func WhereInColumn[T any](column string, values ...T) ScopeMethod {
 		switch idsLen {
 		case 0:
 			return db
+		case 1:
+			return db.Where(column+" = ?", values[0])
 		default:
 			return db.Where(column+" in (?)", values)
 		}
