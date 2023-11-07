@@ -114,15 +114,15 @@ func WithOperationMutationTracer[T any](tracer Tracer) OperationMutationOption[T
 	}
 }
 
-// WithOperationMutationCtx 设置上下文
-func WithOperationMutationCtx[T any](ctx ICtx) OperationMutationOption[T] {
+// WithOperationMutationICtx 设置上下文
+func WithOperationMutationICtx[T any](ctx ICtx) OperationMutationOption[T] {
 	return func(o *operationMutation[T]) {
 		o.ICtx = ctx
 	}
 }
 
-// WithOperationMutationBind 设置数据库
-func WithOperationMutationBind[T any](bind IBind[T]) OperationMutationOption[T] {
+// WithOperationMutationIBind 设置数据库
+func WithOperationMutationIBind[T any](bind IBind[T]) OperationMutationOption[T] {
 	return func(o *operationMutation[T]) {
 		o.IBind = bind
 	}

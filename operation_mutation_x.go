@@ -118,8 +118,8 @@ func NewOperationMutationX[T any](opts ...OperationMutationXOption[T]) IOperatio
 	return o
 }
 
-// WithOperationMutationXBind 设置绑定
-func WithOperationMutationXBind[T any](bind IBind[T]) OperationMutationXOption[T] {
+// WithOperationMutationXIBind 设置绑定
+func WithOperationMutationXIBind[T any](bind IBind[T]) OperationMutationXOption[T] {
 	return func(o *operationMutationX[T]) {
 		o.IBind = bind
 	}
@@ -132,8 +132,8 @@ func WithOperationMutationXTracer[T any](tracer Tracer) OperationMutationXOption
 	}
 }
 
-// WithOperationMutationXCtx 设置上下文
-func WithOperationMutationXCtx[T any](ctx ICtx) OperationMutationXOption[T] {
+// WithOperationMutationXICtx 设置上下文
+func WithOperationMutationXICtx[T any](ctx ICtx) OperationMutationXOption[T] {
 	return func(o *operationMutationX[T]) {
 		o.ICtx = ctx
 	}

@@ -42,15 +42,27 @@ type (
 	}
 
 	ActionOption[T any] func(a *action[T])
+
+	Ctx struct {
+		ctx context.Context
+	}
 )
+
+func (l *Ctx) GetCtx() context.Context {
+	return l.ctx
+}
+
+// NewCtx 实例化上下文
+func NewCtx(ctx context.Context) ICtx {
+	return &Ctx{ctx: ctx}
+}
 
 // NewAction 创建GORM操作接口实例
 func NewAction[T any](opts ...ActionOption[T]) IAction[T] {
 	ac := action[T]{
-		ctx:         context.Background(),
-		IOperation:  NewOperationImpl[T](),
-		IOperationX: NewOperationXImpl[T](),
-		Tracer:      NewITracer(),
+		ctx: context.Background(),
+
+		Tracer: NewITracer(),
 	}
 
 	for _, opt := range opts {
@@ -65,7 +77,47 @@ func NewAction[T any](opts ...ActionOption[T]) IAction[T] {
 		ac.IAssociation = NewDefaultAssociation(ac.db)
 	}
 
+	WithICtx[T](NewCtx(ac.ctx))(&ac)
+
 	return &ac
+}
+
+// WithICtx 设置ICtx
+func WithICtx[T any](ctx ICtx) ActionOption[T] {
+	return func(a *action[T]) {
+		a.IOperation = NewOperationImpl[T](
+			WithOperationQuery[T](
+				NewOperationQuery[T](
+					WithOperationQueryICtx[T](ctx),
+					WithOperationQueryTracer[T](a.Tracer),
+					WithOperationQueryIBind[T](a),
+				),
+			),
+			WithOperationMutation[T](
+				NewOperationMutation[T](
+					WithOperationMutationICtx[T](ctx),
+					WithOperationMutationTracer[T](a.Tracer),
+					WithOperationMutationIBind[T](a),
+				),
+			),
+		)
+		a.IOperationX = NewOperationXImpl[T](
+			WithOperationQueryX[T](
+				NewOperationQueryX[T](
+					WithOperationQueryXICtx[T](ctx),
+					WithOperationQueryXTracer[T](a.Tracer),
+					WithOperationQueryXIBind[T](a),
+				),
+			),
+			WithOperationMutationX[T](
+				NewOperationMutationX[T](
+					WithOperationMutationXICtx[T](ctx),
+					WithOperationMutationXTracer[T](a.Tracer),
+					WithOperationMutationXIBind[T](a),
+				),
+			),
+		)
+	}
 }
 
 // DB 获取DB, 包含了Table或Model, 用于链式操作

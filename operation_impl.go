@@ -11,10 +11,7 @@ type (
 
 // defaultOperationImpl 默认操作实现
 func defaultOperationImpl[T any]() *OperationImpl[T] {
-	return &OperationImpl[T]{
-		IOperationQuery:    NewOperationQuery[T](),
-		IOperationMutation: NewOperationMutation[T](),
-	}
+	return &OperationImpl[T]{}
 }
 
 // NewOperationImpl 实例化操作
