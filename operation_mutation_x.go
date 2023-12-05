@@ -64,11 +64,11 @@ func (l *operationMutationX[T]) UpdateMapX(m map[string]any, wheres ...ScopeMeth
 	l.setErr(l.DB().WithContext(ctx).Scopes(wheres...).Updates(m).Error)
 }
 
-func (l *operationMutationX[T]) UpdateByIDX(id uint, m *T, wheres ...ScopeMethod) {
+func (l *operationMutationX[T]) UpdateByIDX(id uint32, m *T, wheres ...ScopeMethod) {
 	l.UpdateX(m, append(wheres, WhereID(id))...)
 }
 
-func (l *operationMutationX[T]) UpdateMapByIDX(id uint, m map[string]any, wheres ...ScopeMethod) {
+func (l *operationMutationX[T]) UpdateMapByIDX(id uint32, m map[string]any, wheres ...ScopeMethod) {
 	l.UpdateMapX(m, append(wheres, WhereID(id))...)
 }
 
@@ -83,7 +83,7 @@ func (l *operationMutationX[T]) DeleteX(wheres ...ScopeMethod) {
 	l.setErr(l.DB().WithContext(ctx).Scopes(wheres...).Delete(&m).Error)
 }
 
-func (l *operationMutationX[T]) DeleteByIDX(id uint, wheres ...ScopeMethod) {
+func (l *operationMutationX[T]) DeleteByIDX(id uint32, wheres ...ScopeMethod) {
 	l.DeleteX(append(wheres, WhereID(id))...)
 }
 
@@ -91,7 +91,7 @@ func (l *operationMutationX[T]) ForcedDeleteX(wheres ...ScopeMethod) {
 	l.DeleteX(append(wheres, WithTrashed)...)
 }
 
-func (l *operationMutationX[T]) ForcedDeleteByIDX(id uint, wheres ...ScopeMethod) {
+func (l *operationMutationX[T]) ForcedDeleteByIDX(id uint32, wheres ...ScopeMethod) {
 	l.DeleteX(append(wheres, WhereID(id), WithTrashed)...)
 }
 

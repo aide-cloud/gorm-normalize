@@ -7,17 +7,17 @@ type IOperationQuery[T any] interface {
 	// FirstWithTrashed 查询单条数据(包含软删除数据)
 	FirstWithTrashed(wheres ...ScopeMethod) (*T, error)
 	// FirstByID 根据ID查询单条数据
-	FirstByID(id uint, wheres ...ScopeMethod) (*T, error)
+	FirstByID(id uint32, wheres ...ScopeMethod) (*T, error)
 	// FirstByIDWithTrashed 根据ID查询单条数据(包含软删除数据)
-	FirstByIDWithTrashed(id uint, wheres ...ScopeMethod) (*T, error)
+	FirstByIDWithTrashed(id uint32, wheres ...ScopeMethod) (*T, error)
 	// Last 查询单条数据
 	Last(wheres ...ScopeMethod) (*T, error)
 	// LastWithTrashed 查询单条数据(包含软删除数据)
 	LastWithTrashed(wheres ...ScopeMethod) (*T, error)
 	// LastByID 根据ID查询单条数据
-	LastByID(id uint, wheres ...ScopeMethod) (*T, error)
+	LastByID(id uint32, wheres ...ScopeMethod) (*T, error)
 	// LastByIDWithTrashed 根据ID查询单条数据(包含软删除数据)
-	LastByIDWithTrashed(id uint, wheres ...ScopeMethod) (*T, error)
+	LastByIDWithTrashed(id uint32, wheres ...ScopeMethod) (*T, error)
 	// List 查询多条数据
 	List(pgInfo Pagination, wheres ...ScopeMethod) ([]*T, error)
 	// ListWithTrashed 查询多条数据(包含软删除数据)
@@ -39,17 +39,17 @@ type IOperationMutation[T any] interface {
 	// UpdateMap 通过map更新数据
 	UpdateMap(m map[string]any, wheres ...ScopeMethod) error
 	// UpdateByID 根据ID更新数据
-	UpdateByID(id uint, m *T, wheres ...ScopeMethod) error
+	UpdateByID(id uint32, m *T, wheres ...ScopeMethod) error
 	// UpdateMapByID 根据ID更新数据
-	UpdateMapByID(id uint, m map[string]any, wheres ...ScopeMethod) error
+	UpdateMapByID(id uint32, m map[string]any, wheres ...ScopeMethod) error
 	// Delete 删除数据
 	Delete(wheres ...ScopeMethod) error
 	// DeleteByID 根据ID删除数据
-	DeleteByID(id uint, wheres ...ScopeMethod) error
+	DeleteByID(id uint32, wheres ...ScopeMethod) error
 	// ForcedDelete 强制删除数据
 	ForcedDelete(wheres ...ScopeMethod) error
 	// ForcedDeleteByID 根据ID强制删除数据
-	ForcedDeleteByID(id uint, wheres ...ScopeMethod) error
+	ForcedDeleteByID(id uint32, wheres ...ScopeMethod) error
 }
 
 type IOperation[T any] interface {

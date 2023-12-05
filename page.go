@@ -3,48 +3,48 @@ package query
 var _ Pagination = (*Page)(nil)
 
 var (
-	defaultCurr = 1
-	defaultSize = 10
+	defaultCurr int32 = 1
+	defaultSize int32 = 10
 )
 
 type Pagination interface {
-	GetCurr() int
-	GetSize() int
+	GetCurr() int32
+	GetSize() int32
 	SetTotal(total int64)
 	GetTotal() int64
 }
 
 type Page struct {
-	Curr  int   `json:"curr"`
-	Size  int   `json:"size"`
+	Curr int32 `json:"curr"`
+	Size int32 `json:"size"`
 	Total int64 `json:"total"`
 }
 
 // WithDefaultCurr is used to set default curr
-func WithDefaultCurr(curr int) {
+func WithDefaultCurr(curr int32) {
 	defaultCurr = curr
 }
 
 // WithDefaultSize is used to set default size
-func WithDefaultSize(size int) {
+func WithDefaultSize(size int32) {
 	defaultSize = size
 }
 
-func NewPage(curr, size int) *Page {
+func NewPage(curr, size int32) *Page {
 	return &Page{
 		Curr: curr,
 		Size: size,
 	}
 }
 
-func (p *Page) GetCurr() int {
+func (p *Page) GetCurr() int32 {
 	if p == nil || p.Curr <= 0 {
 		return defaultCurr
 	}
 	return p.Curr
 }
 
-func (p *Page) GetSize() int {
+func (p *Page) GetSize() int32 {
 	if p == nil || p.Size <= 0 {
 		return defaultSize
 	}
@@ -53,8 +53,7 @@ func (p *Page) GetSize() int {
 
 func (p *Page) SetTotal(total int64) {
 	if p == nil {
-		_p := NewPage(defaultCurr, defaultSize)
-		*p = *_p
+		return
 	}
 	p.Total = total
 }

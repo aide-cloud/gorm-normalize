@@ -41,11 +41,11 @@ func (l *operationQueryX[T]) FirstWithTrashedX(wheres ...ScopeMethod) *T {
 	return l.FirstX(append(wheres, WithTrashed)...)
 }
 
-func (l *operationQueryX[T]) FirstByIDX(id uint, wheres ...ScopeMethod) *T {
+func (l *operationQueryX[T]) FirstByIDX(id uint32, wheres ...ScopeMethod) *T {
 	return l.FirstX(append(wheres, WhereID(id))...)
 }
 
-func (l *operationQueryX[T]) FirstByIDWithTrashedX(id uint, wheres ...ScopeMethod) *T {
+func (l *operationQueryX[T]) FirstByIDWithTrashedX(id uint32, wheres ...ScopeMethod) *T {
 	return l.FirstX(append(wheres, WhereID(id), WithTrashed)...)
 }
 
@@ -68,11 +68,11 @@ func (l *operationQueryX[T]) LastWithTrashedX(wheres ...ScopeMethod) *T {
 	return l.LastX(append(wheres, WithTrashed)...)
 }
 
-func (l *operationQueryX[T]) LastByIDX(id uint, wheres ...ScopeMethod) *T {
+func (l *operationQueryX[T]) LastByIDX(id uint32, wheres ...ScopeMethod) *T {
 	return l.LastX(append(wheres, WhereID(id))...)
 }
 
-func (l *operationQueryX[T]) LastByIDWithTrashedX(id uint, wheres ...ScopeMethod) *T {
+func (l *operationQueryX[T]) LastByIDWithTrashedX(id uint32, wheres ...ScopeMethod) *T {
 	return l.LastX(append(wheres, WhereID(id), WithTrashed)...)
 }
 

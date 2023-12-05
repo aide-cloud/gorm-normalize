@@ -63,11 +63,11 @@ func (l *operationMutation[T]) UpdateMap(m map[string]any, wheres ...ScopeMethod
 	return l.DB().WithContext(ctx).Scopes(wheres...).Updates(m).Error
 }
 
-func (l *operationMutation[T]) UpdateByID(id uint, m *T, wheres ...ScopeMethod) error {
+func (l *operationMutation[T]) UpdateByID(id uint32, m *T, wheres ...ScopeMethod) error {
 	return l.Update(m, append(wheres, WhereID(id))...)
 }
 
-func (l *operationMutation[T]) UpdateMapByID(id uint, m map[string]any, wheres ...ScopeMethod) error {
+func (l *operationMutation[T]) UpdateMapByID(id uint32, m map[string]any, wheres ...ScopeMethod) error {
 	return l.UpdateMap(m, append(wheres, WhereID(id))...)
 }
 
@@ -82,7 +82,7 @@ func (l *operationMutation[T]) Delete(wheres ...ScopeMethod) error {
 	return l.DB().WithContext(ctx).Scopes(wheres...).Delete(&m).Error
 }
 
-func (l *operationMutation[T]) DeleteByID(id uint, wheres ...ScopeMethod) error {
+func (l *operationMutation[T]) DeleteByID(id uint32, wheres ...ScopeMethod) error {
 	return l.Delete(append(wheres, WhereID(id))...)
 }
 
@@ -90,7 +90,7 @@ func (l *operationMutation[T]) ForcedDelete(wheres ...ScopeMethod) error {
 	return l.Delete(append(wheres, WithTrashed)...)
 }
 
-func (l *operationMutation[T]) ForcedDeleteByID(id uint, wheres ...ScopeMethod) error {
+func (l *operationMutation[T]) ForcedDeleteByID(id uint32, wheres ...ScopeMethod) error {
 	return l.Delete(append(wheres, WhereID(id), WithTrashed)...)
 }
 

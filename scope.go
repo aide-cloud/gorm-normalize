@@ -20,7 +20,7 @@ func WhereInColumn[T any](column string, values ...T) ScopeMethod {
 }
 
 // WhereID 通过ID列表进行查询
-func WhereID(ids ...uint) ScopeMethod {
+func WhereID(ids ...uint32) ScopeMethod {
 	return WhereInColumn("id", ids...)
 }
 
@@ -59,7 +59,7 @@ func Paginate(pgInfo Pagination) ScopeMethod {
 		if pgInfo == nil {
 			return db
 		}
-		return db.Limit(pgInfo.GetSize()).Offset((pgInfo.GetCurr() - 1) * pgInfo.GetSize())
+		return db.Limit(int(pgInfo.GetSize())).Offset(int((pgInfo.GetCurr() - 1) * pgInfo.GetSize()))
 	}
 }
 

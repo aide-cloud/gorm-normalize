@@ -67,11 +67,11 @@ func (l *operationQuery[T]) FirstWithTrashed(wheres ...ScopeMethod) (*T, error) 
 	return l.First(append(wheres, WithTrashed)...)
 }
 
-func (l *operationQuery[T]) FirstByID(id uint, wheres ...ScopeMethod) (*T, error) {
+func (l *operationQuery[T]) FirstByID(id uint32, wheres ...ScopeMethod) (*T, error) {
 	return l.First(append(wheres, WhereID(id))...)
 }
 
-func (l *operationQuery[T]) FirstByIDWithTrashed(id uint, wheres ...ScopeMethod) (*T, error) {
+func (l *operationQuery[T]) FirstByIDWithTrashed(id uint32, wheres ...ScopeMethod) (*T, error) {
 	return l.First(append(wheres, WhereID(id), WithTrashed)...)
 }
 
@@ -94,11 +94,11 @@ func (l *operationQuery[T]) LastWithTrashed(wheres ...ScopeMethod) (*T, error) {
 	return l.Last(append(wheres, WithTrashed)...)
 }
 
-func (l *operationQuery[T]) LastByID(id uint, wheres ...ScopeMethod) (*T, error) {
+func (l *operationQuery[T]) LastByID(id uint32, wheres ...ScopeMethod) (*T, error) {
 	return l.Last(append(wheres, WhereID(id))...)
 }
 
-func (l *operationQuery[T]) LastByIDWithTrashed(id uint, wheres ...ScopeMethod) (*T, error) {
+func (l *operationQuery[T]) LastByIDWithTrashed(id uint32, wheres ...ScopeMethod) (*T, error) {
 	return l.Last(append(wheres, WhereID(id), WithTrashed)...)
 }
 
